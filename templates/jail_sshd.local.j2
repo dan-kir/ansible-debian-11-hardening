@@ -1,0 +1,9 @@
+[DEFAULT]
+bantime = {{ fail2ban_bantime }}
+banaction = nftables-multiport
+banaction_allports = nftables-allports
+
+[sshd]
+enabled = true
+maxretry = 5
+findtime = 600

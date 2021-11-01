@@ -1,0 +1,25 @@
+---
+- name: Fail2Ban - Install fail2ban packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - fail2ban
+
+- name: Fail2Ban - Copy jail_sshd.local file
+  ansible.builtin.template:
+    src: jail_sshd.local.j2
+    dest: "/etc/fail2ban/jail.d/jail_sshd.local"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Restart fail2ban
+
+- name: Fail2Ban - Start and enable fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban.service
+    enabled: yes
+    state: started
+    masked: no

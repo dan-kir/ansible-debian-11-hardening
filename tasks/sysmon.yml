@@ -1,0 +1,73 @@
+---
+## Sysmon Config file
+## https://gist.github.com/Cyb3rWard0g/bcf1514cc340197f0076bf1da8954077
+
+- name: Sysmon - Install prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - lsb-release
+    - apt-transport-https
+    - gnupg
+
+- name: Sysmon - Install Microsoft signing key
+  ansible.builtin.apt_key:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    state: present
+
+- name: Sysmon - Configure Microsoft prod repository
+  ansible.builtin.apt_repository:
+    repo: 'deb [arch=amd64,armhf,arm64] https://packages.microsoft.com/debian/11/prod bullseye main'
+    state: present
+    update_cache: yes
+
+- name: Sysmon - Install SysmonForLinux package
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - sysinternalsebpf
+    - sysmonforlinux
+
+- name: Sysmon - Copy Sysmon Collect all Configuration
+  ansible.builtin.copy:
+    src: sysmon-all-config.xml
+    dest: "/opt/sysmon-config.xml"
+    owner: root
+    group: root
+    mode: 0644
+  register: sysmon_config_change
+  when:
+    - sysmon_collect_all_enabled | bool
+
+- name: Sysmon - Copy Sysmon MSTIC Configuration
+  ansible.builtin.copy:
+    src: sysmon-mstic-config.xml
+    dest: "/opt/sysmon-config.xml"
+    owner: root
+    group: root
+    mode: 0644
+  register: sysmon_config_change
+  when:
+    - not sysmon_collect_all_enabled | bool
+
+- name: Sysmon - Check if sysmon is running
+  command: "systemctl status sysmon.service"
+  register: systemctl_sysmon_status
+  ignore_errors: yes
+  check_mode: no
+
+- name: Sysmon - Configure SysmonForLinux
+  command: sysmon -accepteula -i /opt/sysmon-config.xml
+  ignore_errors: yes
+  when:
+    - sysmon_config_change.changed
+
+- name: Sysmon - Start and enable SysmonForLinux
+  ansible.builtin.systemd:
+    name: sysmon.service
+    enabled: yes
+    state: started
+    masked: no
+  register: sysmon_service

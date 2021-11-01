@@ -1,0 +1,221 @@
+---
+## Apt
+apt_auto_upgrades_enabled: yes
+
+## AIDE
+aide_enabled: yes
+aide_reinit_enabled: yes # reinit db every time this role is deployed
+security_aide_exclude_dirs:
+  - /dev
+  - /opt
+  - /run
+  - /var
+  - /proc
+  - /home/
+  - /root
+  - /tmp
+
+## SSHD
+sshd_port: 22
+sshd_ciphers: "aes256-gcm@openssh.com,chacha20-poly1305@openssh.com,aes256-ctr
+macs hmac-sha2-256,hmac-sha2-512"
+sshd_kexalgorithms: "ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256"
+sshd_hostkeyalgorithms: "ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-rsa,ssh-dss"
+
+## ClamAV
+clamav_enabled: no
+
+## Fail2ban SSH
+fail2ban_enabled: yes
+fail2ban_bantime: 3600 # 1 Hour
+
+## Sysmon for Linux
+## Will default to MSTIC Sysmon config unless collect_all enabled
+## Sysmon used ~450MB memory on a system with 4GB total
+sysmon_enabled: yes
+sysmon_collect_all_enabled: no
+
+## Hardened_Malloc
+hardened_malloc_enabled: yes # only installs the library
+## Pre-loading hardened_malloc so that it is enabled system wide requires more
+## memory and some applications may not run correctly.
+## Alternative is run applications specifically with
+## LD_PRELOAD='/usr/lib/libhardened_malloc.so/libhardened_malloc.so' app-name
+system_preload_hardened_malloc_enabled: no
+
+## Misc
+## System reboot required for hardened_malloc preload, kernel updates and kernel
+## module hardening
+system_reboot_enabled: yes
+login_message: >
+    You are accessing a secured system and your actions will be logged along
+    with identifying information. Disconnect immediately if you are not an
+    authorized user of this system.
+
+## Kernel
+## Security hardening from
+## https://madaidans-insecurities.github.io/guides/linux-hardening.html
+sysctl_hardening:
+      ## Kernel self-protection ##
+
+      ## A kernel pointer points to a specific location in kernel memory.
+      ## These can be very useful in exploiting the kernel, but kernel pointers are
+      ## not hidden by default — it is easy to uncover them by, for example, reading
+      ## the contents of /proc/kallsyms. This setting aims to mitigate kernel pointer
+      ## leaks. Alternatively, you can set kernel.kptr_restrict=1 to only hide kernel
+      ## pointers from processes without the CAP_SYSLOG capability.
+      kernel.kptr_restrict: 1
+
+      ## dmesg is the kernel log. It exposes a large amount of useful kernel
+      ## debugging information, but this can often leak sensitive information, such
+      ## as kernel pointers. Changing the above sysctl restricts the kernel log to
+      ## the CAP_SYSLOG capability.
+      kernel.dmesg_restrict: 1
+
+      ## eBPF exposes quite large attack surface. As such, it must be restricted.
+      ## These sysctls restrict eBPF to the CAP_BPF capability (CAP_SYS_ADMIN on
+      ## kernel versions prior to 5.8) and enable JIT hardening techniques, such as
+      ## constant blinding.
+      kernel.unprivileged_bpf_disabled: 1
+      net.core.bpf_jit_harden: 2
+
+      ## This restricts loading TTY line disciplines to the CAP_SYS_MODULE capability
+      ## to prevent unprivileged attackers from loading vulnerable line disciplines
+      ## with the TIOCSETD ioctl which has been abused in a number of exploits before.
+      dev.tty.ldisc_autoload: 0
+
+      ## The userfaultfd() syscall is often abused to exploit use-after-free flaws.
+      ## Due to this, this sysctl is used to restrict this syscall to the
+      ## CAP_SYS_PTRACE capability.
+      vm.unprivileged_userfaultfd: 0
+
+      ## kexec is a system call that is used to boot another kernel during runtime.
+      ## This functionality can be abused to load a malicious kernel and gain
+      ## arbitrary code execution in kernel mode so this sysctl disables it.
+      kernel.kexec_load_disabled: 1
+
+      ## Networking ##
+
+      ## This helps protect against SYN flood attacks which are a form of denial of
+      ## service attack, in which an attacker sends a large amount of bogus SYN
+      ## requests in an attempt to consume enough resources to make the system
+      ## unresponsive to legitimate traffic.
+      net.ipv4.tcp_syncookies: 1
+
+      ## This protects against time-wait assassination by dropping RST packets for
+      ## sockets in the time-wait state.
+      net.ipv4.tcp_rfc1337: 1
+
+      ## This setting makes your system ignore all ICMP requests to avoid Smurf
+      ## attacks, make the device more difficult to enumerate on the network and
+      ## prevent clock fingerprinting through ICMP timestamps.
+      net.ipv4.icmp_echo_ignore_all: 1
+
+      ## Malicious IPv6 router advertisements can result in a man-in-the-middle
+      ## attack so they should be disabled.
+      net.ipv6.conf.all.accept_ra: 0
+
+      ## This disables TCP SACK. SACK is commonly exploited and unnecessary for many
+      ## circumstances so it should be disabled if you don't require it.
+      net.ipv4.tcp_sack: 0
+      net.ipv4.tcp_dsack: 0
+      net.ipv4.tcp_fack: 0
+
+      ## Userspace ##
+
+      ## ptrace is a system call that allows a program to alter and inspect another
+      ## running process which allows attackers to trivially modify the memory of
+      ## other running programs. This restricts usage of ptrace to only processes
+      ## with the CAP_SYS_PTRACE capability. Alternatively, set the sysctl to 3
+      ## to disable ptrace entirely.
+      kernel.yama.ptrace_scope: 2
+
+      ## This only permits symlinks to be followed when outside of a world-writable
+      ## sticky directory, when the owner of the symlink and follower match, or when
+      ## the directory owner matches the symlink's owner. This also prevents
+      ## hardlinks from being created by users that do not have read/write access
+      ## to the source file. Both of these prevent many common TOCTOU races.
+      fs.protected_symlinks: 1
+      fs.protected_hardlinks: 1
+
+      ## ASLR is a common exploit mitigation which randomises the position of
+      ## critical parts of a process in memory. This can make a wide variety of
+      ## exploits harder to pull off as they first require an information leak.
+      ## The above settings increase the bits of entropy used for mmap ASLR,
+      ## improving its effectiveness.
+      vm.mmap_rnd_bits: 32
+      vm.mmap_rnd_compat_bits: 16
+
+## Audit daemon (auditd)
+## Configurations based on RHEL7 STIG
+auditd_enabled: yes
+laurel_enabled: yes
+## Set the auditd failure flag.
+## 0: In the event of an auditing failure, do nothing.
+## 1: In the event of an auditing failure, write messages to the kernel log.
+## 2: In the event of an auditing failure, cause a kernel panic
+audit_failure_flag: 1                         # V-72081
+## Set the action to take when the disk is full or network events cannot be sent.
+auditd_disk_full_action: syslog               # V-72087
+auditd_network_failure_action: syslog         # V-72087
+## Size of remaining disk space (in MB) that triggers alerts.
+auditd_space_left: "{{ (ansible_facts['mounts'] | selectattr('mount', 'equalto', '/') | map(attribute='size_total') | first * 0.25 / 1024 / 1024) | int }}" # V-72089
+## Action to take when the space_left threshold is reached.
+auditd_space_left_action: email               # V-72091
+## Send auditd email alerts to this user.
+auditd_action_mail_acct: root                 # V-72093
+## Add audit rules for commands/syscalls.
+audit_chsh: yes                               # V-72167
+audit_chage: yes                              # V-72155
+audit_chcon: yes                              # V-72139
+audit_chmod: no                               # V-72105
+audit_chown: no                               # V-72097
+audit_creat: yes                              # V-72123
+audit_crontab: yes                            # V-72183
+audit_delete_module: yes                      # V-72189
+audit_fchmod: no                              # V-72107
+audit_fchmodat: no                            # V-72109
+audit_fchown: no                              # V-72099
+audit_fchownat: no                            # V-72103
+audit_fremovexattr: no                        # V-72119
+audit_fsetxattr: no                           # V-72113
+audit_ftruncate: yes                          # V-72133
+audit_init_module: yes                        # V-72187
+audit_gpasswd: yes                            # V-72153
+audit_lchown: no                              # V-72101
+audit_lremovexattr: no                        # V-72121
+audit_lsetxattr: no                           # V-72115
+audit_mount: yes                              # V-72171
+audit_newgrp: yes                             # V-72165
+audit_open: yes                               # V-72125
+audit_openat: yes                             # V-72127
+audit_open_by_handle_at: yes                  # V-72129
+audit_pam_timestamp_check: yes                # V-72185
+audit_passwd: yes                             # V-72149
+audit_postdrop: yes                           # V-72175
+audit_postqueue: yes                          # V-72177
+audit_removexattr: no                         # V-72117
+audit_rename: yes                             # V-72199
+audit_renameat: yes                           # V-72201
+audit_restorecon: yes                         # V-72141
+audit_rmdir: yes                              # V-72203
+audit_semanage: yes                           # V-72135
+audit_setsebool: yes                          # V-72137
+audit_setxattr: no                            # V-72111
+audit_ssh_keysign: yes                        # V-72179
+audit_su: yes                                 # V-72159
+audit_sudo: yes                               # V-72161
+audit_sudoedit: yes                           # V-72169
+audit_truncate: yes                           # V-72131
+audit_umount: yes                             # V-72173
+audit_unix_chkpwd: yes                        # V-72151
+audit_unlink: yes                             # V-72205
+audit_unlinkat: yes                           # V-72207
+audit_userhelper: yes                         # V-72157
+## Add audit rules for other events.
+audit_account_access: yes                     # V-72143
+audit_sudo_config_changes: yes                # V-72163
+audit_insmod: yes                             # V-72191
+audit_rmmod: yes                              # V-72193
+audit_modprobe: yes                           # V-72195
+audit_account_actions: yes                    # V-72197

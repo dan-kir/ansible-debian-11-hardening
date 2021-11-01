@@ -1,0 +1,64 @@
+---
+- name: Auditd - Install auditd packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - auditd
+    - audispd-plugins
+
+- name: Auditd - Verify that auditd.conf exists
+  stat:
+    path: /etc/audit/auditd.conf
+  register: auditd_conf
+  check_mode: no
+
+- name: Auditd - Verify that audisp-remote.conf exists
+  stat:
+    path: /etc/audisp/audisp-remote.conf
+  register: audisp_remote_conf
+  check_mode: no
+
+- name: Auditd - Get valid system architectures for audit rules
+  set_fact:
+    auditd_architectures: "{{ (ansible_facts['architecture'] == 'ppc64le') | ternary(['ppc64'], ['b32', 'b64']) }}"
+  check_mode: no
+
+- name: Auditd - Remove system default audit.rules file
+  file:
+    path: /etc/audit/rules.d/audit.rules
+    state: absent
+  when:
+    - auditd_conf.stat.exists
+  notify:
+    - Generate auditd Rules
+
+- name: Auditd - Deploy rules for auditd based on STIG requirements
+  template:
+    src: osas-auditd-rhel7.j2
+    dest: /etc/audit/rules.d/osas-auditd-rhel7.rules
+  when:
+    - auditd_conf.stat.exists
+  notify:
+    - Generate auditd Rules
+
+- name: Auditd - Adjust auditd/audispd configurations
+  lineinfile:
+    dest: "{{ item.config }}"
+    regexp: '^#?{{ item.parameter }}\s*='
+    line: "{{ item.parameter }} = {{ item.value }}"
+  with_items: "{{ auditd_config }}"
+  when:
+    - auditd_conf.stat.exists
+  notify:
+    - Restart auditd
+
+- name: Auditd - Ensure auditd is running and enabled at boot time
+  ansible.builtin.systemd:
+    name: auditd.service
+    enabled: yes
+    state: started
+    masked: no
+  when:
+    - auditd_conf.stat.exists

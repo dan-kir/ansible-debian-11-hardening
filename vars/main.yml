@@ -1,0 +1,179 @@
+---
+## auditd configuration
+auditd_config:
+  - parameter: space_left
+    value: "{{ auditd_space_left }}"
+    config: /etc/audit/auditd.conf
+  - parameter: space_left_action
+    value: "{{ auditd_space_left_action }}"
+    config: /etc/audit/auditd.conf
+  - parameter: action_mail_acct
+    value: "{{ auditd_action_mail_acct }}"
+    config: /etc/audit/auditd.conf
+  - parameter: log_format
+    value: ENRICHED
+    config: /etc/audit/auditd.conf
+
+## auditd rules
+# This variable is used in tasks/auditd.yml to deploy auditd rules
+# for various commands and syscalls.
+#
+# Each dictionary has this structure:
+#
+#   command: the command/syscall to audit (required)
+#   stig_id: the number/ID from the STIG (required)
+#   arch_specific: 'yes' if the rule depends on the architecture type,
+#                  otherwise 'no' (required)
+#   path: the path to the command (optional, default is '/usr/bin')
+#
+audited_commands:
+  - command: chsh
+    stig_id: V-72167
+    arch_specific: no
+  - command: chage
+    stig_id: V-72155
+    arch_specific: no
+  - command: chcon
+    stig_id: V-72139
+    arch_specific: no
+  - command: chmod
+    stig_id: V-72105
+    arch_specific: yes
+  - command: chown
+    stig_id: V-72097
+    arch_specific: yes
+  - command: creat
+    stig_id: V-72123
+    arch_specific: yes
+  - command: crontab
+    stig_id: V-72183
+    arch_specific: no
+  - command: delete_module
+    stig_id: V-72189
+    arch_specific: yes
+  - command: fchmod
+    stig_id: V-72107
+    arch_specific: yes
+  - command: fchmodat
+    stig_id: V-72109
+    arch_specific: yes
+  - command: fchown
+    stig_id: V-72099
+    arch_specific: yes
+  - command: fchownat
+    stig_id: V-72103
+    arch_specific: yes
+  - command: fremovexattr
+    stig_id: V-72119
+    arch_specific: yes
+  - command: fsetxattr
+    stig_id: V-72113
+    arch_specific: yes
+  - command: ftruncate
+    stig_id: V-72133
+    arch_specific: yes
+  - command: init_module
+    stig_id: V-72187
+    arch_specific: yes
+  - command: gpasswd
+    stig_id: V-72153
+    arch_specific: no
+  - command: lchown
+    stig_id: V-72101
+    arch_specific: yes
+  - command: lremovexattr
+    stig_id: V-72121
+    arch_specific: yes
+  - command: lsetxattr
+    stig_id: V-72115
+    arch_specific: yes
+  - command: mount
+    path: /bin
+    stig_id: V-72171
+    arch_specific: no
+  - command: newgrp
+    stig_id: V-72165
+    arch_specific: no
+  - command: open
+    stig_id: V-72125
+    arch_specific: yes
+  - command: openat
+    stig_id: V-72127
+    arch_specific: yes
+  - command: open_by_handle_at
+    stig_id: V-72129
+    arch_specific: yes
+  - command: pam_timestamp_check
+    path: /sbin
+    stig_id: V-72185
+    arch_specific: no
+  - command: passwd
+    stig_id: V-72149
+    arch_specific: no
+  - command: postdrop
+    path: /usr/sbin
+    stig_id: V-72175
+    arch_specific: no
+  - command: postqueue
+    path: /usr/sbin
+    stig_id: V-72177
+    arch_specific: no
+  - command: removexattr
+    stig_id: V-72117
+    arch_specific: yes
+  - command: rename
+    stig_id: V-72199
+    arch_specific: yes
+  - command: renameat
+    stig_id: V-72201
+    arch_specific: yes
+  - command: restorecon
+    path: /usr/sbin
+    stig_id: V-72141
+    arch_specific: no
+  - command: rmdir
+    stig_id: V-72203
+    arch_specific: yes
+  - command: semanage
+    path: /usr/sbin
+    stig_id: V-72135
+    arch_specific: no
+  - command: setsebool
+    path: /usr/sbin
+    stig_id: V-72137
+    arch_specific: no
+  - command: setxattr
+    stig_id: V-72111
+    arch_specific: yes
+  - command: su
+    path: /bin
+    stig_id: V-72159
+    arch_specific: no
+  - command: sudo
+    stig_id: V-72161
+    arch_specific: no
+  - command: sudoedit
+    path: /bin
+    stig_id: V-72169
+    arch_specific: no
+  - command: truncate
+    stig_id: V-72131
+    arch_specific: yes
+  - command: umount
+    path: /bin
+    stig_id: V-72173
+    arch_specific: no
+  - command: unix_chkpwd
+    path: /sbin
+    stig_id: V-72151
+    arch_specific: no
+  - command: unlink
+    stig_id: V-72205
+    arch_specific: yes
+  - command: unlinkat
+    stig_id: V-72207
+    arch_specific: yes
+  - command: userhelper
+    path: /usr/sbin
+    stig_id: V-72157
+    arch_specific: no

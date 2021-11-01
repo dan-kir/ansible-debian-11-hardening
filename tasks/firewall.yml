@@ -1,0 +1,41 @@
+---
+- name: Firewall - Install firewall packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - nftables
+    - firewalld
+
+- name: Firewall - Copy firewalld.conf
+  ansible.builtin.copy:
+    src: files/firewalld.conf
+    dest: "/etc/firewalld/firewalld.conf"
+    owner: root
+    group: root
+    mode: 0644
+  notify: Restart firewalld
+
+- name: Firewall - Start and enable firewalld
+  ansible.builtin.systemd:
+    name: firewalld.service
+    enabled: yes
+    state: started
+    masked: no
+
+- name: Firewall - Firewalld SSHD rule
+  ansible.posix.firewalld:
+    port: "{{ sshd_port }}/tcp"
+    permanent: yes
+    immediate: yes
+    state: enabled
+  notify: Restart firewalld
+
+- name: Firewall - Enable public firewalld zone
+  ansible.posix.firewalld:
+    zone: public
+    interface: "{{ ansible_default_ipv4.interface }}"
+    permanent: yes
+    state: enabled
+  notify: Restart firewalld

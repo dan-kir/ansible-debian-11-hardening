@@ -1,0 +1,60 @@
+---
+- name: LAUREL - Check that LAUREL binary does not already exist
+  ansible.builtin.stat:
+    path: /usr/local/sbin/laurel
+  register: laurel_bin_check
+  check_mode: no
+
+- name: LAUREL - Download and extract LAUREL
+  ansible.builtin.unarchive:
+    src: https://github.com/threathunters-io/laurel/releases/download/v0.1.4/laurel-v0.1.4-x86_64-musl.tar.gz
+    dest: /tmp/
+    remote_src: yes
+  when: laurel_bin_check.stat.exists == False
+  register: laurel_download
+  ignore_errors: yes
+
+- name: LAUREL - Copy LAUREL binary to /usr/local/sbin
+  ansible.builtin.copy:
+    src: /tmp/laurel
+    dest: /usr/local/sbin/laurel
+    remote_src: yes
+    mode: 0750
+  when: laurel_download.changed
+
+- name: LAUREL - Ensure LAUREL user exists
+  ansible.builtin.user:
+    name: laurel
+    create_home: yes
+    home: /var/log/laurel
+    shell: /bin/false
+    system: yes
+
+- name: LAUREL - Create /etc/laurel directory
+  ansible.builtin.file:
+    path: /etc/laurel
+    state: directory
+    recurse: yes
+    owner: laurel
+    group: laurel
+
+- name: LAUREL - Configure LAUREL
+  ansible.builtin.copy:
+    src: laurel_config.toml
+    dest: /etc/laurel/config.toml
+  register: laurel_config
+
+- name: LAUREL - Configure auditd to use LAUREL
+  ansible.builtin.copy:
+    src: laurel_auditd_config.conf
+    dest: /etc/audit/plugins.d/laurel.conf
+  register: laurel_config
+
+- name: LAUREL - Tell auditd(8) to re-evaluate its configuration
+  ansible.builtin.shell: "pkill -HUP auditd"
+  changed_when: false
+  ignore_errors: yes
+  when:
+    - laurel_config.changed
+  notify:
+    - Restart auditd

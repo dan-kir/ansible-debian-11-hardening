@@ -1,0 +1,23 @@
+port {{ sshd_port }}
+ciphers {{ sshd_ciphers }}
+kexalgorithms {{ sshd_kexalgorithms }}
+hostkeyalgorithms {{ sshd_hostkeyalgorithms }}
+
+PermitRootLogin no
+
+PubkeyAuthentication yes
+
+AuthorizedKeysFile	.ssh/authorized_keys .ssh/authorized_keys2
+
+PasswordAuthentication no
+PermitEmptyPasswords no
+
+ChallengeResponseAuthentication no
+
+GSSAPIAuthentication no
+
+AllowAgentForwarding yes
+AllowTcpForwarding yes
+GatewayPorts no
+X11Forwarding no
+TCPKeepAlive yes

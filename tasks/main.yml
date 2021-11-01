@@ -1,0 +1,41 @@
+---
+- ansible.builtin.import_tasks: apt.yml
+
+- ansible.builtin.import_tasks: auditd.yml
+  when:
+    - auditd_enabled | bool
+
+- ansible.builtin.import_tasks: laurel.yml
+  when:
+    - laurel_enabled | bool
+    - auditd_enabled | bool
+
+- ansible.builtin.import_tasks: sysmon.yml
+  when:
+    - sysmon_enabled | bool
+
+- ansible.builtin.import_tasks: apparmor.yml
+
+- ansible.builtin.import_tasks: firewall.yml
+
+- ansible.builtin.import_tasks: fail2ban.yml
+  when:
+    - fail2ban_enabled | bool
+
+- ansible.builtin.import_tasks: sshd.yml
+
+- ansible.builtin.import_tasks: misc.yml
+
+- ansible.builtin.import_tasks: hardened_malloc.yml
+  when:
+    - hardened_malloc_enabled | bool
+
+- ansible.builtin.import_tasks: kernel.yml
+
+- ansible.builtin.import_tasks: clamav.yml
+  when:
+    - clamav_enabled | bool
+
+- ansible.builtin.import_tasks: aide.yml
+  when:
+    - aide_enabled | bool

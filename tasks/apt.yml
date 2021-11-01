@@ -1,0 +1,56 @@
+---
+- name: Apt - Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Apt - Update all packages to their latest version
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+
+- name: Apt - Ensure debsums is installed
+  ansible.builtin.apt:
+    name: debsums
+    state: present
+
+- name: Apt - Gather debsums report
+  ansible.builtin.shell: "debsums > /tmp/debsums.txt"
+  changed_when: False
+  failed_when: False
+
+- name: Apt - Get files with invalid checksums (apt)
+  ansible.builtin.shell: "grep -v OK$ /tmp/debsums.txt | awk '{ print $1 }'"
+  register: invalid_checksum_files
+  changed_when: False
+
+- name: Apt - Create comma-separated list of invalid checksums
+  ansible.builtin.set_fact:
+    invalid_checksum_files_violations: "{{ invalid_checksum_files.stdout_lines | default([]) | join(', ') }}"
+  when:
+    - invalid_checksum_files is defined
+    - invalid_checksum_files.stdout is defined
+
+- name: Apt - The cryptographic hash of system files and commands must match vendor values (apt)
+  ansible.builtin.debug:
+    msg: >
+      The following files have checksums that differ from the checksum provided
+      with their package. Each of these should be verified manually to ensure
+      they have not been modified by an unauthorized user:
+      {{ invalid_checksum_files_violations }}
+  when:
+    - invalid_checksum_files is defined
+    - invalid_checksum_files.stdout is defined
+
+- name: Apt - Ensure unattended-upgrades is installed
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+  when:
+    - apt_auto_upgrades_enabled | bool
+
+- name: Apt - Enable automatic package upgrades
+  ansible.builtin.copy:
+    src: 20auto-upgrades
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+  when:
+    - apt_auto_upgrades_enabled | bool

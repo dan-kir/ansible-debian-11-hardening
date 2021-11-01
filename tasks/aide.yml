@@ -1,0 +1,50 @@
+---
+- name: AIDE - Install AIDE packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - aide
+    - aide-common
+
+- name: AIDE - Verify that AIDE configuration directory exists
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  with_items:
+    - /etc/aide/aide.conf.d
+    - /etc/aide.conf
+  check_mode: no
+
+- name: AIDE - Exclude certain directories from AIDE
+  ansible.builtin.template:
+    src: ZZ_aide_exclusions.j2
+    dest: /etc/aide/aide.conf.d/ZZ_aide_exclusions
+
+- name: AIDE - Check to see if AIDE database is already in place
+  ansible.builtin.stat:
+    path: /var/lib/aide/aide.db
+  register: aide_database
+  check_mode: no
+
+- name: AIDE - Initialize AIDE (this will take a few minutes)
+  ansible.builtin.shell: "if test -x /usr/sbin/aideinit; then aideinit; else aide -i; fi"
+  changed_when: false
+  register: aide_init
+  when:
+    - not aide_database.stat.exists | bool
+
+- name: AIDE - Reinitialize AIDE (this will take a few minutes)
+  ansible.builtin.shell: "aide -u -c /etc/aide/aide.conf"
+  changed_when: false
+  register: aide_init
+  ignore_errors: yes
+  when:
+    - aide_reinit_enabled | bool
+    - aide_database.stat.exists | bool
+
+- name: AIDE - Move AIDE database into place
+  ansible.builtin.command: "mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db"
+  changed_when: false
+  when:
+    - aide_init is not skipped

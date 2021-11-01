@@ -1,0 +1,22 @@
+---
+## Kernel security hardening from
+## https://madaidans-insecurities.github.io/guides/linux-hardening.html
+
+- name: Kernel - Disable unused kernel modules
+  ansible.builtin.copy:
+    src: kernel_module_hardening.conf
+    dest: /etc/modprobe.d/kernel_module_hardening.conf
+    owner: root
+    group: root
+    mode: '644'
+  notify: Restart system
+
+- name: Kernel - Apply sysctl kernel hardening
+  ansible.posix.sysctl:
+    name: '{{ item.key }}'
+    value: '{{ item.value }}'
+    sysctl_set: yes
+    state: present
+    reload: yes
+    ignoreerrors: yes
+  with_dict: '{{ sysctl_hardening }}'

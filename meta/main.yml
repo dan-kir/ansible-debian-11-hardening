@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Dan Kir
+  description: Security hardening role for Debian 11
+  company: Dan Kir
+  license: GPL-3.0 License
+  min_ansible_version: 2.10
+  platforms:
+  - name: Debian
+    versions:
+      - bullseye
+  categories:
+  - cloud
+  - security
+  - system
+  - linux
+dependencies: []

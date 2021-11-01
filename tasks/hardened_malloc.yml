@@ -1,0 +1,48 @@
+---
+- name: Hardened_malloc - Install prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - lsb-release
+    - apt-transport-https
+    - gnupg
+
+- name: Hardened_malloc - Install Whonix signing key
+  ansible.builtin.apt_key:
+    url: https://www.whonix.org/derivative.asc
+    state: present
+
+- name: Hardened_malloc - Configure Whonix repository
+  ansible.builtin.apt_repository:
+    repo: 'deb https://deb.whonix.org bullseye main contrib non-free'
+    state: present
+    update_cache: yes
+
+- name: Hardened_malloc - Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Hardened_malloc - Install hardened-malloc library
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - hardened-malloc
+
+- name: Hardened_malloc - Sysctl vm.max_map_count
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: '1048576'
+    sysctl_set: yes
+    state: present
+    reload: yes
+
+- name: Hardened_malloc - Enable hardened-malloc system wide
+  ansible.builtin.copy:
+    src: ld.so.preload
+    dest: /etc/ld.so.preload
+  when:
+    - system_preload_hardened_malloc_enabled | bool
+  notify: Restart system

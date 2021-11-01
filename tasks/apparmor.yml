@@ -1,0 +1,28 @@
+---
+- name: AppArmor - Install apparmor profiles and utils
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - apparmor-profiles
+    - apparmor-profiles-extra
+    - apparmor-utils
+    - apparmor-notify
+
+- name: AppArmor - Check apparmor_status output
+  ansible.builtin.command: apparmor_status
+  register: apparmor_status_output
+  check_mode: no
+
+- name: AppArmor - Check if apparmor is running
+  ansible.builtin.command: "systemctl status apparmor"
+  register: systemctl_apparmor_status
+  check_mode: no
+
+- name: AppArmor - Start and enable apparmor
+  ansible.builtin.systemd:
+    name: apparmor.service
+    enabled: yes
+    state: started
+    masked: no
