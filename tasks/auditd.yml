@@ -9,24 +9,24 @@
     - audispd-plugins
 
 - name: Auditd - Verify that auditd.conf exists
-  stat:
+  ansible.builtin.stat:
     path: /etc/audit/auditd.conf
   register: auditd_conf
   check_mode: no
 
 - name: Auditd - Verify that audisp-remote.conf exists
-  stat:
+  ansible.builtin.stat:
     path: /etc/audisp/audisp-remote.conf
   register: audisp_remote_conf
   check_mode: no
 
 - name: Auditd - Get valid system architectures for audit rules
-  set_fact:
+  ansible.builtin.set_fact:
     auditd_architectures: "{{ (ansible_facts['architecture'] == 'ppc64le') | ternary(['ppc64'], ['b32', 'b64']) }}"
   check_mode: no
 
 - name: Auditd - Remove system default audit.rules file
-  file:
+  ansible.builtin.file:
     path: /etc/audit/rules.d/audit.rules
     state: absent
   when:
@@ -35,7 +35,7 @@
     - Generate auditd Rules
 
 - name: Auditd - Deploy rules for auditd based on STIG requirements
-  template:
+  ansible.builtin.template:
     src: osas-auditd-rhel7.j2
     dest: /etc/audit/rules.d/osas-auditd-rhel7.rules
   when:
@@ -44,7 +44,7 @@
     - Generate auditd Rules
 
 - name: Auditd - Adjust auditd/audispd configurations
-  lineinfile:
+  ansible.builtin.lineinfile:
     dest: "{{ item.config }}"
     regexp: '^#?{{ item.parameter }}\s*='
     line: "{{ item.parameter }} = {{ item.value }}"

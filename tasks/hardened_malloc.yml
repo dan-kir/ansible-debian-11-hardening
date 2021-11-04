@@ -2,6 +2,7 @@
 - name: Hardened_malloc - Install prerequisite packages
   ansible.builtin.apt:
     name: "{{ packages }}"
+    state: present
   vars:
     packages:
     - lsb-release

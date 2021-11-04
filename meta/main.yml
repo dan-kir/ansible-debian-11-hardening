@@ -1,4 +1,6 @@
 ---
+dependencies: []
+
 galaxy_info:
   author: Dan Kir
   description: Security hardening role for Debian 11

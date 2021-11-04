@@ -8,14 +8,22 @@
     - nftables
     - firewalld
 
-- name: Firewall - Copy firewalld.conf
-  ansible.builtin.copy:
-    src: files/firewalld.conf
-    dest: "/etc/firewalld/firewalld.conf"
-    owner: root
-    group: root
-    mode: 0644
-  notify: Restart firewalld
+- name: Firewall - Check that Firewalld conf exists
+  ansible.builtin.stat:
+    path: /etc/firewalld/firewalld.conf
+  register: firewalld_conf
+  check_mode: no
+
+- name: Firewall - Adjust Firewalld configurations
+  ansible.builtin.lineinfile:
+    dest: "{{ item.config }}"
+    regexp: '^#?{{ item.parameter }}\s*='
+    line: "{{ item.parameter }}={{ item.value }}"
+  with_items: "{{ firewalld_config }}"
+  when:
+    - firewalld_conf.stat.exists
+  notify:
+    - Restart firewalld
 
 - name: Firewall - Start and enable firewalld
   ansible.builtin.systemd:

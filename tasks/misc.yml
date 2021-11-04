@@ -14,9 +14,9 @@
     state: started
     masked: no
 
-- name: Miscellaneous - Set timezone to Etc/UTC
+- name: Miscellaneous - Set timezone
   community.general.timezone:
-    name: Etc/UTC
+    name: "{{ timezone }}"
 
 - name: Miscellaneous - Start and enable chronyd
   ansible.builtin.systemd:

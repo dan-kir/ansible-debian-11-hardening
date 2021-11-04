@@ -1,4 +1,107 @@
 ---
+## firewalld configuration
+firewalld_config:
+  - parameter: DefaultZone
+    value: public
+    config: /etc/firewalld/firewalld.conf
+  - parameter: FirewallBackend
+    value: nftables
+    config: /etc/firewalld/firewalld.conf
+
+## Kernel
+## Security hardening from
+## https://madaidans-insecurities.github.io/guides/linux-hardening.html
+sysctl_hardening:
+      ## Kernel self-protection ##
+
+      ## A kernel pointer points to a specific location in kernel memory.
+      ## These can be very useful in exploiting the kernel, but kernel pointers are
+      ## not hidden by default — it is easy to uncover them by, for example, reading
+      ## the contents of /proc/kallsyms. This setting aims to mitigate kernel pointer
+      ## leaks. Alternatively, you can set kernel.kptr_restrict=1 to only hide kernel
+      ## pointers from processes without the CAP_SYSLOG capability.
+      kernel.kptr_restrict: 1
+
+      ## dmesg is the kernel log. It exposes a large amount of useful kernel
+      ## debugging information, but this can often leak sensitive information, such
+      ## as kernel pointers. Changing the above sysctl restricts the kernel log to
+      ## the CAP_SYSLOG capability.
+      kernel.dmesg_restrict: 1
+
+      ## eBPF exposes quite large attack surface. As such, it must be restricted.
+      ## These sysctls restrict eBPF to the CAP_BPF capability (CAP_SYS_ADMIN on
+      ## kernel versions prior to 5.8) and enable JIT hardening techniques, such as
+      ## constant blinding.
+      kernel.unprivileged_bpf_disabled: 1
+      net.core.bpf_jit_harden: 2
+
+      ## This restricts loading TTY line disciplines to the CAP_SYS_MODULE capability
+      ## to prevent unprivileged attackers from loading vulnerable line disciplines
+      ## with the TIOCSETD ioctl which has been abused in a number of exploits before.
+      dev.tty.ldisc_autoload: 0
+
+      ## The userfaultfd() syscall is often abused to exploit use-after-free flaws.
+      ## Due to this, this sysctl is used to restrict this syscall to the
+      ## CAP_SYS_PTRACE capability.
+      vm.unprivileged_userfaultfd: 0
+
+      ## kexec is a system call that is used to boot another kernel during runtime.
+      ## This functionality can be abused to load a malicious kernel and gain
+      ## arbitrary code execution in kernel mode so this sysctl disables it.
+      kernel.kexec_load_disabled: 1
+
+      ## Networking ##
+
+      ## This helps protect against SYN flood attacks which are a form of denial of
+      ## service attack, in which an attacker sends a large amount of bogus SYN
+      ## requests in an attempt to consume enough resources to make the system
+      ## unresponsive to legitimate traffic.
+      net.ipv4.tcp_syncookies: 1
+
+      ## This protects against time-wait assassination by dropping RST packets for
+      ## sockets in the time-wait state.
+      net.ipv4.tcp_rfc1337: 1
+
+      ## This setting makes your system ignore all ICMP requests to avoid Smurf
+      ## attacks, make the device more difficult to enumerate on the network and
+      ## prevent clock fingerprinting through ICMP timestamps.
+      net.ipv4.icmp_echo_ignore_all: 1
+
+      ## Malicious IPv6 router advertisements can result in a man-in-the-middle
+      ## attack so they should be disabled.
+      net.ipv6.conf.all.accept_ra: 0
+
+      ## This disables TCP SACK. SACK is commonly exploited and unnecessary for many
+      ## circumstances so it should be disabled if you don't require it.
+      net.ipv4.tcp_sack: 0
+      net.ipv4.tcp_dsack: 0
+      net.ipv4.tcp_fack: 0
+
+      ## Userspace ##
+
+      ## ptrace is a system call that allows a program to alter and inspect another
+      ## running process which allows attackers to trivially modify the memory of
+      ## other running programs. This restricts usage of ptrace to only processes
+      ## with the CAP_SYS_PTRACE capability. Alternatively, set the sysctl to 3
+      ## to disable ptrace entirely.
+      kernel.yama.ptrace_scope: 2
+
+      ## This only permits symlinks to be followed when outside of a world-writable
+      ## sticky directory, when the owner of the symlink and follower match, or when
+      ## the directory owner matches the symlink's owner. This also prevents
+      ## hardlinks from being created by users that do not have read/write access
+      ## to the source file. Both of these prevent many common TOCTOU races.
+      fs.protected_symlinks: 1
+      fs.protected_hardlinks: 1
+
+      ## ASLR is a common exploit mitigation which randomises the position of
+      ## critical parts of a process in memory. This can make a wide variety of
+      ## exploits harder to pull off as they first require an information leak.
+      ## The above settings increase the bits of entropy used for mmap ASLR,
+      ## improving its effectiveness.
+      vm.mmap_rnd_bits: 32
+      vm.mmap_rnd_compat_bits: 16
+
 ## auditd configuration
 auditd_config:
   - parameter: space_left
