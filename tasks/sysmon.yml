@@ -53,13 +53,13 @@
     - not sysmon_collect_all_enabled | bool
 
 - name: Sysmon - Check if sysmon is running
-  command: "systemctl status sysmon.service"
+  ansible.builtin.command: "systemctl status sysmon.service"
   register: systemctl_sysmon_status
   ignore_errors: yes
   check_mode: no
 
 - name: Sysmon - Configure SysmonForLinux
-  command: sysmon -accepteula -i /opt/sysmon-config.xml
+  ansible.builtin.command: sysmon -accepteula -i /opt/sysmon-config.xml
   ignore_errors: yes
   when:
     - sysmon_config_change.changed

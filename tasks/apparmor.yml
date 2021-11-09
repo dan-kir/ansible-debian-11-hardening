@@ -14,11 +14,13 @@
   ansible.builtin.command: apparmor_status
   register: apparmor_status_output
   check_mode: no
+  changed_when: False
 
 - name: AppArmor - Check if apparmor is running
   ansible.builtin.command: "systemctl status apparmor"
   register: systemctl_apparmor_status
   check_mode: no
+  changed_when: False
 
 - name: AppArmor - Start and enable apparmor
   ansible.builtin.systemd:

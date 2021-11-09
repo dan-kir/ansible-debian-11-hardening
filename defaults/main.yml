@@ -4,7 +4,7 @@ apt_auto_upgrades_enabled: yes
 
 ## AIDE
 aide_enabled: yes
-aide_reinit_enabled: yes # reinit db every time this role is deployed
+aide_reinit_enabled: no # reinit db every time this role is deployed
 security_aide_exclude_dirs:
   - /dev
   - /opt
@@ -32,7 +32,7 @@ fail2ban_bantime: 3600 # 1 Hour
 ## Sysmon for Linux
 ## Will default to MSTIC Sysmon config unless collect_all enabled
 ## Sysmon used ~450MB memory on a system with 4GB total
-sysmon_enabled: yes
+sysmon_enabled: no
 sysmon_collect_all_enabled: no
 
 ## Hardened_Malloc
@@ -47,6 +47,7 @@ system_preload_hardened_malloc_enabled: no
 ## System reboot required for hardened_malloc preload, kernel updates and kernel
 ## module hardening
 system_reboot_enabled: yes
+network_ipv6_disabled: yes
 timezone: Etc/UTC
 login_message: >
     You are accessing a secured system and your actions will be logged along

@@ -7,7 +7,7 @@
 
 - name: LAUREL - Download and extract LAUREL
   ansible.builtin.unarchive:
-    src: https://github.com/threathunters-io/laurel/releases/download/v0.1.4/laurel-v0.1.4-x86_64-musl.tar.gz
+    src: https://github.com/threathunters-io/laurel/releases/download/v0.1.5/laurel-v0.1.5-x86_64-musl.tar.gz
     dest: /tmp/
     remote_src: yes
   when: laurel_bin_check.stat.exists == False
@@ -34,20 +34,26 @@
   ansible.builtin.file:
     path: /etc/laurel
     state: directory
-    recurse: yes
-    owner: laurel
-    group: laurel
+    owner: root
+    group: root
+    mode: 0744
 
 - name: LAUREL - Configure LAUREL
   ansible.builtin.copy:
     src: laurel_config.toml
     dest: /etc/laurel/config.toml
+    owner: root
+    group: root
+    mode: 0640
   register: laurel_config
 
 - name: LAUREL - Configure auditd to use LAUREL
   ansible.builtin.copy:
     src: laurel_auditd_config.conf
     dest: /etc/audit/plugins.d/laurel.conf
+    owner: root
+    group: root
+    mode: 0640
   register: laurel_config
 
 - name: LAUREL - Tell auditd(8) to re-evaluate its configuration

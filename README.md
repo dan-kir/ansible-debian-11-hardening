@@ -3,7 +3,7 @@ ansible-debian-11-hardening
 This role applies security hardening configurations to systems running
 Debian 11 (Bullseye).
 These configurations include:
-* AIDE -
+* AIDE
 * AppArmor
 * Apt Package Manager
 * Auditd + LAUREL
