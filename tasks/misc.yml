@@ -18,6 +18,14 @@
   community.general.timezone:
     name: "{{ timezone }}"
 
+- name: Miscellaneous - Install chrony
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - chrony
+
 - name: Miscellaneous - Start and enable chronyd
   ansible.builtin.systemd:
     name: chronyd.service
