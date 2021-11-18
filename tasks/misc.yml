@@ -14,6 +14,14 @@
     state: started
     masked: no
 
+- name: Miscellaneous - Install Rootkit Hunter
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - rkhunter
+
 - name: Miscellaneous - Set timezone
   community.general.timezone:
     name: "{{ timezone }}"

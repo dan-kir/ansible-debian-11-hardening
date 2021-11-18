@@ -8,6 +8,20 @@ firewalld_config:
     value: nftables
     config: /etc/firewalld/firewalld.conf
 
+sshd_config:
+  - parameter: PasswordAuthentication
+    value: "no"
+    config: /etc/ssh/sshd_config
+  - parameter: PermitEmptyPasswords
+    value: "no"
+    config: /etc/ssh/sshd_config
+  - parameter: ChallengeResponseAuthentication
+    value: "no"
+    config: /etc/ssh/sshd_config
+  - parameter: X11Forwarding
+    value: "no"
+    config: /etc/ssh/sshd_config
+
 ## Kernel
 ## Security hardening from
 ## https://madaidans-insecurities.github.io/guides/linux-hardening.html

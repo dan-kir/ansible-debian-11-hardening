@@ -10,8 +10,15 @@
 
 - name: Apt - Ensure debsums is installed
   ansible.builtin.apt:
-    name: debsums
+    name: "{{ packages }}"
     state: present
+  vars:
+    packages:
+    - debsums
+    - apt-listbugs
+    - apt-listchanges
+    - needrestart
+    - debsecan
 
 - name: Apt - Gather debsums report
   ansible.builtin.shell: "debsums > /tmp/debsums.txt"

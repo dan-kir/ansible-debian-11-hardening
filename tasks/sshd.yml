@@ -5,6 +5,15 @@
     dest: /etc/ssh/sshd_config.d/ZZ_sshd_config.conf
   notify: Restart sshd
 
+- name: OpenSSHd - Adjust SSHd configurations
+  ansible.builtin.lineinfile:
+    dest: "{{ item.config }}"
+    regexp: '^#?{{ item.parameter }}\s*='
+    line: "{{ item.parameter }} {{ item.value }}"
+  with_items: "{{ sshd_config }}"
+  notify:
+    - Restart sshd
+
 - name: OpenSSHd - Include configuration block
   ansible.builtin.lineinfile:
     dest: /etc/ssh/sshd_config
