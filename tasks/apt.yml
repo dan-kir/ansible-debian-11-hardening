@@ -15,7 +15,6 @@
   vars:
     packages:
     - debsums
-    - apt-listbugs
     - apt-listchanges
     - needrestart
     - debsecan
